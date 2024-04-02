@@ -9,8 +9,7 @@ import google.generativeai as genai
 
 app = Flask(__name__)
 
-# Configure Generative AI model (replace with your actual API key)
-genai.configure(api_key="AIzaSyDX14XHuVZscz2Ihjui1d3Ank1penTGwlU")
+genai.configure(api_key="--------------------------------------")
 
 # Define DSA topics
 dsa_topics = {
