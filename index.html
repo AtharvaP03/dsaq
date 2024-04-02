@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generate DSA Questions</title>
+    <title>DSA Question Generator</title>
 </head>
 <body>
-    <h1>Generate DSA Questions</h1>
-    <form id="question-form">
-        <label for="num-questions">Number of Questions:</label>
-        <input type="number" id="num-questions" name="num-questions" value="5" min="1" max="10">
+    <h1>DSA Question Generator</h1>
+
+    <!-- Form to specify the number of questions and select topics -->
+    <form id="questionForm">
+        <label for="numQuestions">Number of Questions:</label>
+        <input type="number" id="numQuestions" name="numQuestions" value="5" min="1">
         <br>
-        <label for="topics">Topics:</label>
-        <select id="topics" name="topics" multiple size="4">
-            {% for topic in topics %}
-                <option value="{{ topic }}">{{ topic }}</option>
-            {% endfor %}
-        </select>
+        <label for="topics">Select Topic(s):</label><br>
+        {% for topic in topics %}
+            <input type="checkbox" id="{{ topic }}" name="topics" value="{{ topic }}">
+            <label for="{{ topic }}">{{ topic }}</label><br>
+        {% endfor %}
         <br>
         <label for="difficulty">Difficulty:</label>
         <select id="difficulty" name="difficulty">
@@ -25,47 +26,48 @@
             <option value="hard">Hard</option>
         </select>
         <br>
-        <button type="button" onclick="generateQuestions()">Generate Questions</button>
+        <button type="submit">Generate Questions</button>
     </form>
-    <div id="questions-container"></div>
+
+    <!-- Container to display generated questions -->
+    <div id="questionsContainer"></div>
 
     <script>
-        function generateQuestions() {
-            const numQuestions = document.getElementById("num-questions").value;
-            const topics = Array.from(document.getElementById("topics").selectedOptions).map(option => option.value);
-            const difficulty = document.getElementById("difficulty").value;
-            const requestData = {
-                num_questions: numQuestions,
-                topics: topics,
-                difficulty: difficulty
-            };
+        // Function to handle form submission and AJAX request to Flask backend
+        document.getElementById("questionForm").addEventListener("submit", function(event) {
+            event.preventDefault();
 
+            // Gather form data
+            var formData = new FormData(this);
+
+            // Make AJAX POST request to Flask backend
             fetch('/generate_dsa_questions', {
                 method: 'POST',
+                body: JSON.stringify(Object.fromEntries(formData)),
                 headers: {
                     'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
+                }
             })
             .then(response => response.json())
             .then(data => {
-                const questionsContainer = document.getElementById("questions-container");
-                questionsContainer.innerHTML = "";
+                // Clear previous questions
+                document.getElementById("questionsContainer").innerHTML = "";
+
+                // Display generated questions
                 data.questions.forEach(question => {
-                    const questionDiv = document.createElement("div");
-                    questionDiv.innerHTML = `<h2>Topic: ${question.topic}</h2><p>Question: ${question.question}</p>`;
-                    const testCasesList = document.createElement("ul");
+                    var questionDiv = document.createElement("div");
+                    questionDiv.innerHTML = "<h2>Topic: " + question.topic + "</h2><p>" + question.question + "</p>";
+                    
+                    // Display test cases
                     question.test_cases.forEach(testCase => {
-                        const testCaseItem = document.createElement("li");
-                        testCaseItem.textContent = `Input: ${testCase.input} - Output: ${testCase.output}`;
-                        testCasesList.appendChild(testCaseItem);
+                        questionDiv.innerHTML += "<p>Input: " + testCase.input + "<br>Output: " + testCase.output + "</p>";
                     });
-                    questionDiv.appendChild(testCasesList);
-                    questionsContainer.appendChild(questionDiv);
+
+                    document.getElementById("questionsContainer").appendChild(questionDiv);
                 });
             })
             .catch(error => console.error('Error:', error));
-        }
+        });
     </script>
 </body>
 </html>
