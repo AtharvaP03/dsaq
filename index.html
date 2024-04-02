@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate DSA Questions</title>
+</head>
+<body>
+    <h1>Generate DSA Questions</h1>
+    <form id="question-form">
+        <label for="num-questions">Number of Questions:</label>
+        <input type="number" id="num-questions" name="num-questions" value="5" min="1" max="10">
+        <br>
+        <label for="topics">Topics:</label>
+        <select id="topics" name="topics" multiple size="4">
+            {% for topic in topics %}
+                <option value="{{ topic }}">{{ topic }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="difficulty">Difficulty:</label>
+        <select id="difficulty" name="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+        <br>
+        <button type="button" onclick="generateQuestions()">Generate Questions</button>
+    </form>
+    <div id="questions-container"></div>
+
+    <script>
+        function generateQuestions() {
+            const numQuestions = document.getElementById("num-questions").value;
+            const topics = Array.from(document.getElementById("topics").selectedOptions).map(option => option.value);
+            const difficulty = document.getElementById("difficulty").value;
+            const requestData = {
+                num_questions: numQuestions,
+                topics: topics,
+                difficulty: difficulty
+            };
+
+            fetch('/generate_dsa_questions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const questionsContainer = document.getElementById("questions-container");
+                questionsContainer.innerHTML = "";
+                data.questions.forEach(question => {
+                    const questionDiv = document.createElement("div");
+                    questionDiv.innerHTML = `<h2>Topic: ${question.topic}</h2><p>Question: ${question.question}</p>`;
+                    const testCasesList = document.createElement("ul");
+                    question.test_cases.forEach(testCase => {
+                        const testCaseItem = document.createElement("li");
+                        testCaseItem.textContent = `Input: ${testCase.input} - Output: ${testCase.output}`;
+                        testCasesList.appendChild(testCaseItem);
+                    });
+                    questionDiv.appendChild(testCasesList);
+                    questionsContainer.appendChild(questionDiv);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
